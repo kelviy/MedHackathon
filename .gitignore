@@ -178,3 +178,4 @@ cython_debug/
 Rene.pth
 *.pth
 *.pt
+data/respiratory-sound-database/
