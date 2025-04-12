@@ -1,35 +1,88 @@
 import streamlit as st
 import pandas as pd
+from google import genai
+import os
 
+Key = "AIzaSyA12uqVb3bEkeR4UdMPpiraAg2Wy8SMg8g"
+input_message = """
+    Top predicted class: **Healthy** (14.9% confidence)
 
-#TODO  
-# Add functionality to upload or record audio recording for processing
-# Add loading bar to emulate api call to model
+Class probabilities:
+  Healthy                  : 14.90%
+  URTI                     : 14.63%
+  Asthma & Lung Fibrosis   : 10.61%
+  Pneumonia                : 10.19%
+  Heart Failure            : 6.68%
+  Heart Failure & Lung Fibrosis: 5.62%
+  Bronchiolitis            : 5.52%
+  Pleural Effusion         : 5.16%
+  Bronchitis               : 5.09%
+  Lung Fibrosis            : 4.89%
+  LRTI                     : 3.94%
+  Asthma                   : 3.70%
+  Heart Failure & COPD     : 3.38%
+  COPD                     : 2.95%
+  Bronchiectasis           : 2.73%
+  Give a summary of the above respository predictions in a way a patient with no medicate knowledge can understand. The probalities are a probability distribution from the ai model"""
+
+client = genai.Client(api_key=Key)
+response = client.models.generate_content(
+    model="gemma-3-27b-it", contents=input_message
+)
+summary = response.text
+
 
 #Data 
-HEALTH_SUMMARY_DATA = {
-    "⚠️ Blood Pressure": "180/110 mmHg (Stage 2 Hypertension)",
-    "❗ Cholesterol": "240 mg/dL (Elevated)",
-    "📈 Blood Sugar": "140 mg/dL (High)",
-    "⚖️ BMI": "29.7 (Overweight)",
-    "👪 Family History": "Hypertension"
-}
-table_rows = "".join(
-        f"""<tr>
-            <td style='padding: 8px 0;'>{key}</td>
-            <td style='padding: 8px 0;'>{value}</td>
-        </tr>""" 
-        for key, value in HEALTH_SUMMARY_DATA.items()
-    )
+
 
 patient = {"Name": "John Doe","Age":58,"Gender": "Male","BMI":29.7}
-pateint_info = "".join(
+pateint_info = "<div>"
+pateint_info += "".join(
     f"""<div class="patient-info">{key}: {value}</div>"""
     for key,value in patient.items()
 )
+pateint_info += "</div>"
 
+image_html = """
+        <div class="image-container">
+            <div class="image-content">
+                <img src="./patient-pic.jpeg" 
+                     alt="Patient Image"
+                     style="object-fit: cover">
+                <div class="image-caption">Patient Profile Image</div>
+            </div>
+        </div>"""
 
+info_with_image = f"""
+                <div style="
+                display:flex;
+                flex-direction: row;
+                justify-content: space-between; 
+                width: 100%;">
+                {pateint_info}
+                {image_html}
+                </div>
+                """
+prediction_probs = {
+    "Healthy": "14.90%",
+    "URTI": "14.63%",
+    "Asthma & Lung Fibrosis": "10.61%",
+    "Pneumonia": "10.19%",
+    "Heart Failure": "6.68%",
+    "Heart Failure & Lung Fibrosis": "5.62%",
+    "Bronchiolitis": "5.52%",
+    "Pleural Effusion": "5.16%",
+    "Bronchitis": "5.09%",
+    "Lung Fibrosis": "4.89%",
+    "LRTI": "3.94%",
+    "Asthma": "3.70%",
+    "Heart Failure & COPD": "3.38%",
+    "COPD": "2.95%",
+    "Bronchiectasis": "2.73%"
+}
 
+primary_condition, primary_value = list(prediction_probs.items())[0]
+secondary_conditions = list(prediction_probs.items())[1:]
 
 st.set_page_config(page_title="Medical Condition Prediction", layout="centered")
 
@@ -89,88 +142,44 @@ st.header("respiratory diseases Prediction".title())
 
 
 # Patient Information Row with Image
-patient_col, image_col = st.columns([3, 1])
-with patient_col:
-    st.markdown("### Patient Information")
-    st.markdown(pateint_info, unsafe_allow_html=True)
-
-with image_col:
-    try:
-        st.markdown('''
-        <div class="image-container">
-            <div class="image-content">
-                <img src="./patient-pic.jpeg" 
-                     alt="Patient Image"
-                     style="object-fit: cover">
-                <div class="image-caption">Patient Profile Image</div>
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
-    except FileNotFoundError:
-        st.error("Patient image not found! Please check the file path.")
+st.markdown("### Patient Information")
+st.markdown(info_with_image, unsafe_allow_html=True)
 
 # Prediction Results Section
 st.markdown("### Prediction Results")
 with st.container(): 
     st.markdown('<div class="prediction-card-marker"></div>', unsafe_allow_html=True)
-    
+
     # Primary Prediction
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.metric(label="Primary Risk", value="65%", delta="High Risk")
+        st.metric(label="Primary Prediction", value=primary_value, delta="Highest Probability")
     with col2:
-        st.markdown('<p class="prediction-header">Hypertension</p>', unsafe_allow_html=True)
-        st.progress(65)
-    
+        st.markdown(f'<p class="prediction-header">{primary_condition}</p>', unsafe_allow_html=True)
+        # Convert percentage string to float in 0–1 range
+        st.progress(float(primary_value.strip('%')) / 100)
+
+
     # Divider
     st.markdown("---")
-    
+
     # Secondary Predictions Grid
     st.markdown("**Other Potential Conditions**")
-    pred_col1, pred_col2, pred_col3 = st.columns(3)
-    with pred_col1:
-        st.metric(label="Diabetes Risk", value="20%", delta="Moderate")
-    with pred_col2:
-        st.metric(label="Heart Disease Risk", value="15%", delta="Low")
-    with pred_col3:
-        st.metric(label="Kidney Disease Risk", value="8%", delta="Low")
+    rows = [secondary_conditions[i:i+3] for i in range(0, len(secondary_conditions), 3)]
+    for row in rows:
+        cols = st.columns(3)  # Always create 3 columns
+        for i in range(3):
+            if i < len(row):
+                cond, val = row[i]
+                cols[i].metric(label=f"{cond} Risk", value=val)
+            else:
+                cols[i].empty()  # Fill in with blank to maintain alignment
     
     
-
-# Medical Record Table
-st.subheader("Medical Record")
-with st.expander("📁 Medical Record", expanded=False):
-    medical_data = {
-        "Clinical Parameter": [
-            "Systolic Blood Pressure",
-            "Diastolic Blood Pressure",
-            "Cholesterol Level",
-            "Blood Sugar Level",
-            "Family History"
-        ],
-        "Measurement": [
-            "180 mmHg",
-            "110 mmHg",
-            "240 mg/dL",
-            "140 mg/dL",
-            "Hypertension"
-        ]
-    }
-
-    df = pd.DataFrame(medical_data)
-    st.dataframe(
-        df,
-        hide_index=True,
-        use_container_width=True,
-        column_config={
-            "Clinical Parameter": st.column_config.Column(width="large"),
-            "Measurement": st.column_config.Column(width="medium")
-        }
-    )
-
 
 # Health Summary Dropdown
-with st.expander("View Health Summary", expanded=False):
+st.subheader("AI Summary and ChatBot")
+with st.expander("View Health Summary", expanded=True):
      st.markdown(f"""
     <div style="background-color: #f8d7da; 
                 padding: 20px; 
@@ -178,12 +187,8 @@ with st.expander("View Health Summary", expanded=False):
                 border-left: 4px solid #dc3545;
                 margin: 10px 0;">
         <h4 style="color: #dc3545; margin-top: 0;">Key Risk Factors:</h4>
-        <table style="width: 100%; color: #721c24; margin-bottom: 15px;">
-            {table_rows}
-        </table>
         <p style="color: #721c24; margin-bottom: 0;">
-            <strong>Overall Risk Assessment:</strong> High cardiovascular risk profile 
-            requiring immediate lifestyle modifications and clinical monitoring.
+            <strong>Overall Risk Assessment:</strong> {summary}.
         </p>
     </div>
     """, unsafe_allow_html=True)
