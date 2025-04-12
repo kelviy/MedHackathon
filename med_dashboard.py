@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 from google import genai
 import os
 
@@ -179,7 +178,7 @@ with st.container():
 
 # Health Summary Dropdown
 st.subheader("AI Summary and ChatBot")
-with st.expander("View Health Summary", expanded=True):
+with st.expander("View Health Summary", expanded=False):
      st.markdown(f"""
     <div style="background-color: #f8d7da; 
                 padding: 20px; 
