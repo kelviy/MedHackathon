@@ -179,3 +179,5 @@ Rene.pth
 *.pth
 *.pt
 data/respiratory-sound-database/
+data/labeled_wav_files.csv
+.gradio/
