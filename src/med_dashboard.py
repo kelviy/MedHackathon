@@ -85,7 +85,7 @@ with col1:
         st.markdown(f"<div class='patient-info'>{key}: {value}</div>", unsafe_allow_html=True)
 with col2:
     # Display the patient image using st.image (ensure the image file is in the correct path)
-    st.image("patient-pic.jpeg", caption="Patient Profile Image", width=150)
+    st.image("../patient-pic.jpeg", caption="Patient Profile Image", width=150)
 
 # Prediction Results Section
 st.markdown("### Prediction Results")
@@ -141,16 +141,17 @@ if "chat_history" not in st.session_state:
 chat_input = st.text_input("Enter your message:", key="chat_input")
 if st.button("Send"):
     if chat_input:
-        pre_prompt = f"You are a model that will analyse some data returned from an ai audio prediction model for respiratory diseases. This is a summary of data from an LLM ( {summary.strip()} )that is displayed to user and here is model prediction data ({input_message}). Give helpful insight to the follow messag from user: "
-        # Append the user's message to the chat history
-        st.session_state.chat_history.append(("User", pre_prompt + chat_input))
-        # Use the Google chatbot model to generate a response
-        chat_response = client.models.generate_content(
-            model="gemma-3-27b-it",
-            contents=chat_input
-        )
-        bot_response = chat_response.text
-        st.session_state.chat_history.append(("Bot", bot_response))
+        with st.spinner("Loading response..."):
+            pre_prompt = f"You are a model that will analyse some data returned from an ai audio prediction model for respiratory diseases. This is a summary of data from an LLM ( {summary.strip()} )that is displayed to user and here is model prediction data ({input_message}). Give helpful insight to the follow messag from user: "
+            # Append the user's message to the chat history
+            st.session_state.chat_history.append(("User",chat_input))
+            # Use the Google chatbot model to generate a response
+            chat_response = client.models.generate_content(
+                model="gemma-3-27b-it",
+                contents=pre_prompt+chat_input
+            )
+            bot_response = chat_response.text
+            st.session_state.chat_history.append(("Bot", bot_response))
 
 # Display the conversation
 for sender, message in st.session_state.chat_history:
