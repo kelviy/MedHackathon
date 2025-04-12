@@ -1,0 +1,26 @@
+# Data and model config
+device: 'cuda:0'        # computation device
+sampling_rate: 8000     # audio sampling rate
+win_len: 256            # STFT window length (25ms)
+hop: 80                 # STFT hop length (10ms)
+lowfreq: 50.0           # mel filterbank low freq cutoff
+highfreq: 2500.0        # mel filterbank high freq cutoff
+max_record_time: 16     # max duration of each recording (s)
+max_event_time: 3       # max duration of each respiratory event (s)
+# Model hyperparameters
+whisper_seq: 1500
+whiper_dim: 384
+encoder_dim: 256
+num_encoder_layers: 16
+num_attention_heads: 4
+rnn_hid_dim: 512
+rnn_layers: 2
+bidirect: true
+n_fc_layers: 2
+fc_layer_dim: 1024
+output_dim: 15
+input_dropout: 0.1
+feed_forward_dropout: 0.1
+attention_dropout: 0.1
+conv_dropout: 0.1
+rtb_data_channels: 1
